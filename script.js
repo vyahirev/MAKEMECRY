@@ -180,27 +180,27 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
-// About transitions: fade to black, then reveal actual visual lines.
+// Shared About, Gallery and Socials transitions.
 const ABOUT_CONFIG = { pageFade: 500, blackPause: 100, lineDuration: 500, lineStagger: 70 };
-const aboutPage = document.getElementById("about-page");
-const aboutHome = document.querySelector(".home");
-const aboutOpen = document.getElementById("open-about");
-const aboutBack = document.getElementById("close-about");
-const aboutTitle = document.getElementById("about-title");
-const aboutBackWrap = document.querySelector(".about-back-wrap");
-const aboutParagraphs = [...document.querySelectorAll(".about-text p")];
-const aboutCopy = aboutParagraphs.map(p => p.textContent);
-let aboutState = "home";
-let aboutAnimations = [];
-let aboutScroll = 0;
-const aboutMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-const aboutWait = ms => new Promise(resolve => setTimeout(resolve, ms));
+const pageHome = document.querySelector(".home");
+const pageMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const pageWait = ms => new Promise(resolve => setTimeout(resolve, ms));
+const pages = Object.fromEntries(["about", "gallery", "socials"].map(key => {
+  const element = document.getElementById(`${key}-page`);
+  const paragraphs = [...element.querySelectorAll(".about-text p")];
+  return [key, { key, element, paragraphs, copy: paragraphs.map(p => p.textContent),
+    title: element.querySelector(".about-title"), backWrap: element.querySelector(".about-back-wrap"),
+    back: document.getElementById(`close-${key}`), open: document.getElementById(`open-${key}`), animations: [] }];
+}));
+let pageState = "home";
+let activePage = null;
+let pageScroll = 0;
 
-function splitAboutLines() {
-  aboutParagraphs.forEach((paragraph, index) => {
-    paragraph.setAttribute("aria-label", aboutCopy[index]);
+function splitPageLines(view) {
+  view.paragraphs.forEach((paragraph, index) => {
+    paragraph.setAttribute("aria-label", view.copy[index]);
     paragraph.replaceChildren();
-    const words = aboutCopy[index].split(" ").map((word, i) => {
+    const words = view.copy[index].split(" ").map((word, i) => {
       const span = document.createElement("span");
       span.textContent = (i ? " " : "") + word;
       paragraph.append(span);
@@ -227,8 +227,7 @@ function splitAboutLines() {
   });
 }
 
-// Sample Figma's spring (mass 1, stiffness 80, damping 20).
-function aboutSpringFrames() {
+function pageSpringFrames() {
   const r1 = (-20 + Math.sqrt(80)) / 2;
   const r2 = (-20 - Math.sqrt(80)) / 2;
   const progress = t => 1 - (r2 * Math.exp(r1 * t) - r1 * Math.exp(r2 * t)) / (r2 - r1);
@@ -239,84 +238,107 @@ function aboutSpringFrames() {
   });
 }
 
-async function animateAbout(entering) {
-  aboutAnimations.forEach(animation => animation.cancel());
-  const lines = [...aboutPage.querySelectorAll(".about-line")];
-  const items = [aboutTitle, ...lines, aboutBackWrap];
-  const frames = aboutSpringFrames();
-  aboutAnimations = items.map((element, index) => {
-    let delay = index === 0 ? 201 : index === items.length - 1
-      ? Math.max(1000, 300 + lines.length * ABOUT_CONFIG.lineStagger)
-      : 300 + (index - 1) * ABOUT_CONFIG.lineStagger;
+
+async function animatePage(view, entering) {
+  view.animations.forEach(animation => animation.cancel());
+  const lines = [...view.element.querySelectorAll(".about-line")];
+  const links = [...view.element.querySelectorAll(".social-link-wrap")];
+  const items = [view.title, ...lines, ...links, view.backWrap];
+  const frames = pageSpringFrames();
+  view.animations = items.map((element, index) => {
+    const isBack = element === view.backWrap;
+    const isLink = links.includes(element);
+    let delay = index === 0 ? 201 : isBack ? Math.max(1000, 300 + lines.length * ABOUT_CONFIG.lineStagger)
+      : isLink ? 400 + links.indexOf(element) * 200 : 300 + (index - 1) * ABOUT_CONFIG.lineStagger;
     if (!entering) delay = (items.length - 1 - index) * 40;
-    return element.animate(entering ? frames : frames.slice().reverse().map((frame, i) => ({ ...frame, offset: i / 40 })), {
-      duration: aboutMotion.matches ? 0 : index === 0 ? 750 : ABOUT_CONFIG.lineDuration,
-      delay: aboutMotion.matches ? 0 : delay,
-      fill: "both",
+    let keyframes = isBack ? [{ opacity: 0, offset: 0 }, { opacity: 1, offset: 1 }]
+      : isLink ? frames.map(frame => ({ ...frame, transform: frame.transform.replace(/translateY\(-/, "translateY(") })) : frames;
+    if (!entering) keyframes = keyframes.slice().reverse().map((frame, i, array) => ({ ...frame, offset: i / (array.length - 1) }));
+    return element.animate(keyframes, {
+      duration: pageMotion.matches ? 0 : index === 0 ? 750 : view.key === "gallery" && !isBack ? 1000 : ABOUT_CONFIG.lineDuration,
+      delay: pageMotion.matches ? 0 : delay, fill: "both", easing: isBack ? "ease-out" : "linear",
     });
   });
-  await Promise.all(aboutAnimations.map(animation => animation.finished));
+  await Promise.all(view.animations.map(animation => animation.finished));
 }
 
-async function showAbout() {
-  if (aboutState !== "home" || document.documentElement.classList.contains("intro-active")) return;
-  aboutState = "opening";
-  aboutScroll = window.scrollY;
-  aboutHome.inert = true;
-  document.documentElement.classList.add("about-active");
-  const fade = aboutHome.animate([{ opacity: 1 }, { opacity: 0 }], {
-    duration: aboutMotion.matches ? 0 : ABOUT_CONFIG.pageFade, easing: "ease-out", fill: "forwards",
+async function fadeHome(entering) {
+  const animation = pageHome.animate([{ opacity: entering ? 0 : 1 }, { opacity: entering ? 1 : 0 }], {
+    duration: pageMotion.matches ? 0 : ABOUT_CONFIG.pageFade, easing: "ease-out", fill: "forwards",
   });
-  await fade.finished;
-  aboutHome.style.opacity = "0";
-  fade.cancel();
-  aboutHome.style.visibility = "hidden";
-  if (!aboutMotion.matches) await aboutWait(ABOUT_CONFIG.blackPause);
-  aboutPage.hidden = false;
-  splitAboutLines();
-  await animateAbout(true);
-  aboutPage.inert = false;
-  aboutState = "about";
-  aboutBack.focus({ preventScroll: true });
+  await animation.finished;
+  pageHome.style.opacity = entering ? "" : "0";
+  animation.cancel();
 }
 
-async function hideAbout() {
-  if (aboutState !== "about") return;
-  aboutState = "closing";
-  aboutPage.inert = true;
-  await animateAbout(false);
-  aboutPage.hidden = true;
-  aboutAnimations.forEach(animation => animation.cancel());
-  aboutAnimations = [];
-  aboutPage.scrollTop = 0;
-  if (!aboutMotion.matches) await aboutWait(ABOUT_CONFIG.blackPause);
-  aboutHome.style.visibility = "";
-  const fade = aboutHome.animate([{ opacity: 0 }, { opacity: 1 }], {
-    duration: aboutMotion.matches ? 0 : ABOUT_CONFIG.pageFade, easing: "ease-out", fill: "forwards",
-  });
-  await fade.finished;
-  aboutHome.style.opacity = "";
-  fade.cancel();
-  aboutHome.inert = false;
+function restoreHome(view) {
+  view.animations.forEach(animation => animation.cancel());
+  view.animations = [];
+  view.element.hidden = true;
+  view.element.inert = true;
+  pageHome.style.opacity = "";
+  pageHome.style.visibility = "";
+  pageHome.inert = false;
   document.documentElement.classList.remove("about-active");
-  window.scrollTo(0, aboutScroll);
-  aboutState = "home";
-  aboutOpen.focus({ preventScroll: true });
+  window.scrollTo(0, pageScroll);
+  activePage = null;
+  pageState = "home";
+  view.open.focus({ preventScroll: true });
 }
 
-aboutOpen.addEventListener("click", showAbout);
-aboutBack.addEventListener("click", hideAbout);
-aboutPage.addEventListener("keydown", event => {
-  if (event.key === "Escape") { event.preventDefault(); hideAbout(); }
-  // The dialog has one interactive element: keep keyboard focus on Back.
-  if (event.key === "Tab") { event.preventDefault(); aboutBack.focus(); }
+async function showPage(view) {
+  if (pageState !== "home" || document.documentElement.classList.contains("intro-active")) return;
+  pageState = "opening";
+  activePage = view;
+  pageScroll = window.scrollY;
+  pageHome.inert = true;
+  document.documentElement.classList.add("about-active");
+  try {
+    await fadeHome(false);
+    pageHome.style.visibility = "hidden";
+    if (!pageMotion.matches) await pageWait(ABOUT_CONFIG.blackPause);
+    view.element.hidden = false;
+    splitPageLines(view);
+    await animatePage(view, true);
+    view.element.inert = false;
+    pageState = "open";
+    view.back.focus({ preventScroll: true });
+  } catch (error) { restoreHome(view); console.error(error); }
+}
+
+async function hidePage(view) {
+  if (pageState !== "open" || activePage !== view) return;
+  pageState = "closing";
+  view.element.inert = true;
+  try {
+    await animatePage(view, false);
+    view.element.hidden = true;
+    view.element.scrollTop = 0;
+    if (!pageMotion.matches) await pageWait(ABOUT_CONFIG.blackPause);
+    pageHome.style.visibility = "";
+    await fadeHome(true);
+  } finally { restoreHome(view); }
+}
+
+Object.values(pages).forEach(view => {
+  view.open.addEventListener("click", () => showPage(view));
+  view.back.addEventListener("click", () => hidePage(view));
+  view.element.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); hidePage(view); }
+    if (event.key === "Tab") {
+      const controls = [...view.element.querySelectorAll("a[href], button")];
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
 });
-let aboutResize;
+let pageResize;
 window.addEventListener("resize", () => {
-  clearTimeout(aboutResize);
-  aboutResize = setTimeout(() => {
-    if (aboutState !== "about") return;
-    splitAboutLines();
-    aboutPage.querySelectorAll(".about-line").forEach(line => { line.style.opacity = "1"; });
+  clearTimeout(pageResize);
+  pageResize = setTimeout(() => {
+    if (pageState !== "open") return;
+    splitPageLines(activePage);
+    activePage.element.querySelectorAll(".about-line").forEach(line => { line.style.opacity = "1"; });
   }, 100);
 });

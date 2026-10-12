@@ -486,3 +486,50 @@ html.about-active { overflow: hidden; }
     .about-title { padding-inline: 10px; text-align: left; }
     .about-details { width: 100%; }
 }
+
+/* Socials uses its own narrower grid and Button Link component. */
+.socials-page .about-content { width: min(400px, 100%); column-gap: 10px; }
+.socials-page .about-title { padding: 5px 10px; text-align: left; }
+.social-links { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 100%; }
+.social-link-wrap { opacity: 0; }
+.social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px;
+    color: var(--white);
+    font: inherit;
+    font-size: 12px;
+    letter-spacing: -0.24px;
+    line-height: normal;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.social-label { opacity: 0.75; transition: opacity 200ms ease-out; }
+.social-arrow { display: block; position: relative; flex: 0 0 16px; width: 16px; height: 16px; }
+.social-arrow img { position: absolute; inset: 0; display: block; transition: opacity 200ms ease-out; }
+.social-arrow-hover { opacity: 0; }
+.social-link:is(:hover, :focus-visible) .social-label { opacity: 1; }
+.social-link:is(:hover, :focus-visible) .social-arrow-default { opacity: 0; }
+.social-link:is(:hover, :focus-visible) .social-arrow-hover { opacity: 1; }
+.social-link:focus-visible { outline: 1px solid var(--white); outline-offset: -4px; }
+@media (max-width: 899px) {
+    .socials-page .about-content { width: min(640px, 100%); }
+    .socials-page .about-title { padding: 0 10px; }
+    .social-label, .social-arrow img { transition: none; }
+}
+@media (hover: none), (pointer: coarse) {
+    .social-link { -webkit-tap-highlight-color: transparent; }
+    .social-label, .social-arrow img { transition: none; }
+    .social-link:hover .social-label { opacity: 0.75; }
+    .social-link:hover .social-arrow-default { opacity: 1; }
+    .social-link:hover .social-arrow-hover { opacity: 0; }
+    .social-link:is(:active, :focus-visible) .social-label { opacity: 1; }
+    .social-link:is(:active, :focus-visible) .social-arrow-default { opacity: 0; }
+    .social-link:is(:active, :focus-visible) .social-arrow-hover { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .social-label, .social-arrow img { transition: none; }
+}
