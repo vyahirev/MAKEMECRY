@@ -414,3 +414,16 @@ body {
         transition: none;
     }
 }
+/* Prevent visible text selection on the page. */
+body {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Keep any future text fields editable and selectable. */
+input,
+textarea,
+[contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+}
