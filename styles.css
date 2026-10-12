@@ -427,3 +427,62 @@ textarea,
     -webkit-user-select: text;
     user-select: text;
 }
+
+/* About — Desktop About and Mobile About. */
+@font-face {
+    font-family: "About Heading";
+    src: local("HelveticaNeue-CondensedBold"), local("Helvetica Neue Condensed Bold");
+    font-weight: 700;
+}
+html.about-active { overflow: hidden; }
+.about-page[hidden] { display: none; }
+.about-page {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--black);
+}
+.about-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    column-gap: 25px;
+    width: min(640px, 100%);
+    margin: auto;
+    padding-block: 24px;
+    flex-shrink: 0;
+}
+.about-title {
+    margin: 0;
+    font-family: "About Heading", "Helvetica Neue", Helvetica, sans-serif;
+    font-stretch: condensed;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: -1.2px;
+    text-align: right;
+    opacity: 0;
+}
+.about-details { display: flex; flex-direction: column; align-items: flex-start; gap: 25px; min-width: 0; }
+.about-text {
+    padding-inline: 10px;
+    width: 100%;
+    color: var(--white);
+    opacity: 0.5;
+    font-size: 10px;
+    letter-spacing: -0.2px;
+    line-height: 1.4;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+.about-text p { margin: 0 0 10px; }
+.about-text p:last-child { margin-bottom: 0; }
+.about-line { display: block; opacity: 0; }
+.about-back-wrap { opacity: 0; }
+@media (max-width: 899px) {
+    .about-content { display: flex; flex-direction: column; gap: 35px; padding-inline: 20px; }
+    .about-title { padding-inline: 10px; text-align: left; }
+    .about-details { width: 100%; }
+}

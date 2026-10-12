@@ -179,3 +179,144 @@ function updateClock() {
 
 updateClock();
 setInterval(updateClock, 1000);
+
+// About transitions: fade to black, then reveal actual visual lines.
+const ABOUT_CONFIG = { pageFade: 500, blackPause: 100, lineDuration: 500, lineStagger: 70 };
+const aboutPage = document.getElementById("about-page");
+const aboutHome = document.querySelector(".home");
+const aboutOpen = document.getElementById("open-about");
+const aboutBack = document.getElementById("close-about");
+const aboutTitle = document.getElementById("about-title");
+const aboutBackWrap = document.querySelector(".about-back-wrap");
+const aboutParagraphs = [...document.querySelectorAll(".about-text p")];
+const aboutCopy = aboutParagraphs.map(p => p.textContent);
+let aboutState = "home";
+let aboutAnimations = [];
+let aboutScroll = 0;
+const aboutMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const aboutWait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+function splitAboutLines() {
+  aboutParagraphs.forEach((paragraph, index) => {
+    paragraph.setAttribute("aria-label", aboutCopy[index]);
+    paragraph.replaceChildren();
+    const words = aboutCopy[index].split(" ").map((word, i) => {
+      const span = document.createElement("span");
+      span.textContent = (i ? " " : "") + word;
+      paragraph.append(span);
+      return span;
+    });
+    const lines = [];
+    let lastTop;
+    words.forEach(word => {
+      const range = document.createRange();
+      range.selectNodeContents(word);
+      const rects = [...range.getClientRects()];
+      const top = rects[rects.length - 1]?.top;
+      if (lastTop === undefined || Math.abs(top - lastTop) > 2) lines.push([]);
+      lines[lines.length - 1].push(word.textContent.trim());
+      lastTop = top;
+    });
+    paragraph.replaceChildren(...lines.map(words => {
+      const line = document.createElement("span");
+      line.className = "about-line";
+      line.setAttribute("aria-hidden", "true");
+      line.textContent = words.join(" ");
+      return line;
+    }));
+  });
+}
+
+// Sample Figma's spring (mass 1, stiffness 80, damping 20).
+function aboutSpringFrames() {
+  const r1 = (-20 + Math.sqrt(80)) / 2;
+  const r2 = (-20 - Math.sqrt(80)) / 2;
+  const progress = t => 1 - (r2 * Math.exp(r1 * t) - r1 * Math.exp(r2 * t)) / (r2 - r1);
+  const end = progress(0.5);
+  return Array.from({ length: 41 }, (_, i) => {
+    const value = progress(i / 40 * 0.5) / end;
+    return { offset: i / 40, opacity: value, transform: `translateY(${-16 * (1 - value)}px)` };
+  });
+}
+
+async function animateAbout(entering) {
+  aboutAnimations.forEach(animation => animation.cancel());
+  const lines = [...aboutPage.querySelectorAll(".about-line")];
+  const items = [aboutTitle, ...lines, aboutBackWrap];
+  const frames = aboutSpringFrames();
+  aboutAnimations = items.map((element, index) => {
+    let delay = index === 0 ? 201 : index === items.length - 1
+      ? Math.max(1000, 300 + lines.length * ABOUT_CONFIG.lineStagger)
+      : 300 + (index - 1) * ABOUT_CONFIG.lineStagger;
+    if (!entering) delay = (items.length - 1 - index) * 40;
+    return element.animate(entering ? frames : frames.slice().reverse().map((frame, i) => ({ ...frame, offset: i / 40 })), {
+      duration: aboutMotion.matches ? 0 : index === 0 ? 750 : ABOUT_CONFIG.lineDuration,
+      delay: aboutMotion.matches ? 0 : delay,
+      fill: "both",
+    });
+  });
+  await Promise.all(aboutAnimations.map(animation => animation.finished));
+}
+
+async function showAbout() {
+  if (aboutState !== "home" || document.documentElement.classList.contains("intro-active")) return;
+  aboutState = "opening";
+  aboutScroll = window.scrollY;
+  aboutHome.inert = true;
+  document.documentElement.classList.add("about-active");
+  const fade = aboutHome.animate([{ opacity: 1 }, { opacity: 0 }], {
+    duration: aboutMotion.matches ? 0 : ABOUT_CONFIG.pageFade, easing: "ease-out", fill: "forwards",
+  });
+  await fade.finished;
+  aboutHome.style.opacity = "0";
+  fade.cancel();
+  aboutHome.style.visibility = "hidden";
+  if (!aboutMotion.matches) await aboutWait(ABOUT_CONFIG.blackPause);
+  aboutPage.hidden = false;
+  splitAboutLines();
+  await animateAbout(true);
+  aboutPage.inert = false;
+  aboutState = "about";
+  aboutBack.focus({ preventScroll: true });
+}
+
+async function hideAbout() {
+  if (aboutState !== "about") return;
+  aboutState = "closing";
+  aboutPage.inert = true;
+  await animateAbout(false);
+  aboutPage.hidden = true;
+  aboutAnimations.forEach(animation => animation.cancel());
+  aboutAnimations = [];
+  aboutPage.scrollTop = 0;
+  if (!aboutMotion.matches) await aboutWait(ABOUT_CONFIG.blackPause);
+  aboutHome.style.visibility = "";
+  const fade = aboutHome.animate([{ opacity: 0 }, { opacity: 1 }], {
+    duration: aboutMotion.matches ? 0 : ABOUT_CONFIG.pageFade, easing: "ease-out", fill: "forwards",
+  });
+  await fade.finished;
+  aboutHome.style.opacity = "";
+  fade.cancel();
+  aboutHome.inert = false;
+  document.documentElement.classList.remove("about-active");
+  window.scrollTo(0, aboutScroll);
+  aboutState = "home";
+  aboutOpen.focus({ preventScroll: true });
+}
+
+aboutOpen.addEventListener("click", showAbout);
+aboutBack.addEventListener("click", hideAbout);
+aboutPage.addEventListener("keydown", event => {
+  if (event.key === "Escape") { event.preventDefault(); hideAbout(); }
+  // The dialog has one interactive element: keep keyboard focus on Back.
+  if (event.key === "Tab") { event.preventDefault(); aboutBack.focus(); }
+});
+let aboutResize;
+window.addEventListener("resize", () => {
+  clearTimeout(aboutResize);
+  aboutResize = setTimeout(() => {
+    if (aboutState !== "about") return;
+    splitAboutLines();
+    aboutPage.querySelectorAll(".about-line").forEach(line => { line.style.opacity = "1"; });
+  }, 100);
+});

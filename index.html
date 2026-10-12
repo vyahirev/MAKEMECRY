@@ -32,7 +32,7 @@
   <div class="home">
     <header class="header">
       <nav class="navigation" aria-label="Main navigation">
-        <button class="navigation-button" type="button"><span class="navigation-label" data-label="About">About</span></button>
+        <button class="navigation-button" id="open-about" type="button" aria-controls="about-page"><span class="navigation-label" data-label="About">About</span></button>
         <button class="navigation-button" type="button"><span class="navigation-label" data-label="Gallery">Gallery</span></button>
         <button class="navigation-button" type="button"><span class="navigation-label" data-label="Socials">Socials</span></button>
       </nav>
@@ -54,6 +54,24 @@
       <div class="copyright-row">© <span id="year">2026</span> MAKE(ME)CRY</div>
     </footer>
   </div>
+  <section class="about-page" id="about-page" role="dialog" aria-modal="true" aria-labelledby="about-title" hidden inert>
+    <div class="about-content">
+      <h1 class="about-title" id="about-title">ABOUT(ME)</h1>
+      <div class="about-details">
+        <div class="about-text">
+          <p>m 21 yo / design, music &amp; f*****n</p>
+          <p>i hate my life and appearance, so i will try to change smth</p>
+          <p>i created MAKE(ME)CRY as a reflection of everything i want to be. a projection of my ideals, my sense of style, and the person i hope to become someday</p>
+          <p>i believe life is unfair and full of pain. we'll never fully understand it, or each other. but we can make someone cry. and the only choice we have is whether those tears come from pain or happiness</p>
+          <p>thats how we create our own little worlds</p>
+          <p>and if youre readin this, youve already become a part of my dark little world</p>
+        </div>
+        <div class="about-back-wrap">
+          <button class="navigation-button" id="close-about" type="button"><span class="navigation-label" data-label="Back">Back</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
   <div class="film-grain" aria-hidden="true"></div>
 </body>
 </html>
