@@ -50,7 +50,7 @@ body {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: url("images/img-4.JPG") center / cover no-repeat;
+    background: url("images/img-2.JPG") center / cover no-repeat;
     opacity: 0.25;
     pointer-events: none;
 }
@@ -369,5 +369,48 @@ body {
     .navigation-button:is(:active, :focus-visible) .navigation-label::after {
         clip-path: inset(0);
         animation: none;
+    }
+}
+
+/* Loading Screen: desktop and mobile share a centered 10px message. */
+.loading-intro {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    padding: 24px;
+    color: var(--white);
+    opacity: 1;
+    transition: opacity var(--intro-fade-duration, 500ms) ease-out;
+}
+
+.loading-message {
+    margin: 0;
+    max-width: 100%;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: normal;
+    letter-spacing: -0.2px;
+    text-transform: uppercase;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+/* Invisible full phrase reserves its centered footprint during typing. */
+.loading-message::after {
+    content: attr(data-remaining);
+    visibility: hidden;
+}
+
+.loading-intro.is-leaving {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .loading-intro {
+        transition: none;
     }
 }

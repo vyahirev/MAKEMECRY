@@ -5,10 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>MAKE(ME)CRY</title>
+  <style>
+    html.intro-active { overflow: hidden; }
+    html.intro-active .home { visibility: hidden; }
+    html.intro-revealing .home { visibility: visible; }
+    .loading-intro { position: fixed; inset: 0; z-index: 2147483646; background: #000; }
+    html:not(.intro-active) .loading-intro { display: none; }
+  </style>
+  <script>
+    document.documentElement.classList.add("intro-active");
+    // Recover even if the main script fails to download or execute.
+    window.introWatchdog = setTimeout(() => {
+      document.documentElement.classList.remove("intro-active", "intro-revealing");
+      document.querySelector(".home")?.removeAttribute("inert");
+      document.getElementById("loading-intro")?.remove();
+    }, 8000);
+  </script>
+  <link rel="preload" href="fonts/Fliege_mono/WOFF2/FliegeMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
 </head>
 <body>
+  <div class="loading-intro" id="loading-intro" role="status" aria-label="Loading MAKE(ME)CRY">
+    <p class="loading-message" id="loading-message" aria-hidden="true"></p>
+  </div>
   <div class="home">
     <header class="header">
       <nav class="navigation" aria-label="Main navigation">
