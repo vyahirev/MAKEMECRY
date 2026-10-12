@@ -1,0 +1,373 @@
+@font-face {
+    font-family: "Fliege Mono";
+    src: url("fonts/Fliege_mono/WOFF2/FliegeMono-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Desktop Home: Figma reference 1440 × 900. */
+:root {
+    --black: #000;
+    --white: #fff;
+    --font-mono: "Fliege Mono", monospace;
+    --grain-opacity: 0.2;
+    --grain-size: 200px;
+    --grain-speed: 0.6s;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    background: var(--black);
+    color: var(--white);
+}
+
+body {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-style: normal;
+    line-height: normal;
+}
+
+.home {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 900px;
+    min-height: 100vh;
+    min-height: 100svh;
+}
+
+.home::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: url("images/img-4.JPG") center / cover no-repeat;
+    opacity: 0.25;
+    pointer-events: none;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 10px 0;
+}
+
+.navigation {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.navigation-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: -0.2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 200ms ease-out;
+}
+
+.navigation-button:hover {
+    opacity: 1;
+}
+
+.navigation-button:focus-visible {
+    outline: 1px solid var(--white);
+    outline-offset: -4px;
+}
+
+.body {
+    display: flex;
+    flex: 1 0 0;
+    align-items: center;
+    justify-content: center;
+    min-height: 1px;
+}
+
+.footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    gap: 6px;
+    padding: 20px 0;
+}
+
+.logo-row {
+    display: flex;
+    align-items: center;
+    width: 118px;
+    height: 100px;
+    margin-bottom: 10px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 118px;
+    height: 100px;
+}
+
+.logo {
+    display: block;
+    width: 118px;
+    height: 100px;
+    object-fit: contain;
+}
+
+.information-row,
+.copyright-row {
+    font-size: 10px;
+    letter-spacing: -0.2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.information-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.information-row>*,
+.copyright-row {
+    opacity: 0.5;
+}
+
+/* Keep the text still; animate only its native underline. */
+.navigation-label {
+    position: relative;
+}
+
+.navigation-label::after {
+    content: attr(data-label);
+    position: absolute;
+    inset: 0 0 -1em;
+    padding-bottom: 1em;
+    color: transparent;
+    pointer-events: none;
+    text-decoration-line: underline;
+    text-decoration-color: var(--white);
+    text-decoration-style: solid;
+    text-decoration-skip-ink: auto;
+    text-decoration-thickness: 8%;
+    /* CSS percentages here refer to the font size, as in the Figma values. */
+    text-underline-offset: 33%;
+    text-underline-position: from-font;
+    text-transform: uppercase;
+    clip-path: inset(0 0 0 100%);
+    transition: clip-path 280ms ease;
+}
+
+.navigation-button:is(:hover, :focus-visible) .navigation-label::after {
+    clip-path: inset(0);
+    animation: underline-enter 280ms ease;
+}
+
+@keyframes underline-enter {
+    from {
+        clip-path: inset(0 100% 0 0);
+    }
+
+    to {
+        clip-path: inset(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navigation-label::after {
+        transition: none;
+    }
+
+    .navigation-button:is(:hover, :focus-visible) .navigation-label::after {
+        animation: none;
+    }
+}
+
+/* Film Grain — adapted from NudaUI (MIT):
+   https://nudaui.dev/components/grain-overlay
+   Fixed viewport wrapper clips the small overscan, preventing scrollbars.
+   Normal blending keeps grain visible even over the solid black background. */
+.film-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+    opacity: var(--grain-opacity);
+}
+
+.film-grain::before {
+    content: "";
+    position: absolute;
+    inset: -16px;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22160%22%20height%3D%22160%22%3E%3Cfilter%20id%3D%22grain%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%220.9%22%20numOctaves%3D%223%22%20stitchTiles%3D%22stitch%22%2F%3E%3CfeColorMatrix%20type%3D%22saturate%22%20values%3D%220%22%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D%22linear%22%20slope%3D%222%22%20intercept%3D%22-0.5%22%2F%3E%3CfeFuncG%20type%3D%22linear%22%20slope%3D%222%22%20intercept%3D%22-0.5%22%2F%3E%3CfeFuncB%20type%3D%22linear%22%20slope%3D%222%22%20intercept%3D%22-0.5%22%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20filter%3D%22url%28%23grain%29%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: repeat;
+    background-size: var(--grain-size) var(--grain-size);
+    pointer-events: none;
+    animation: film-grain-shift var(--grain-speed) steps(1, end) infinite;
+}
+
+@keyframes film-grain-shift {
+
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+
+    10% {
+        transform: translate3d(-12px, 8px, 0);
+    }
+
+    20% {
+        transform: translate3d(8px, -10px, 0);
+    }
+
+    30% {
+        transform: translate3d(-8px, -6px, 0);
+    }
+
+    40% {
+        transform: translate3d(10px, 10px, 0);
+    }
+
+    50% {
+        transform: translate3d(-4px, 14px, 0);
+    }
+
+    60% {
+        transform: translate3d(14px, -4px, 0);
+    }
+
+    70% {
+        transform: translate3d(-14px, -12px, 0);
+    }
+
+    80% {
+        transform: translate3d(6px, 12px, 0);
+    }
+
+    90% {
+        transform: translate3d(-10px, 2px, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .film-grain::before {
+        animation: none;
+    }
+}
+
+/* Mobile Home: Figma reference 402 × 874. */
+@media (max-width: 899px) {
+    .home {
+        min-width: 0;
+        min-height: 100svh;
+    }
+
+    .header {
+        padding-top: max(40px, env(safe-area-inset-top, 0px));
+        padding-bottom: 10px;
+    }
+
+    .footer {
+        padding-top: 20px;
+        padding-bottom: max(50px, env(safe-area-inset-bottom, 0px));
+        padding-inline: 12px;
+    }
+
+    .navigation-button,
+    .information-row,
+    .copyright-row {
+        font-size: 12px;
+        letter-spacing: -0.24px;
+    }
+
+    .information-row {
+        display: grid;
+        grid-template-columns: auto auto auto;
+        justify-content: center;
+        justify-items: center;
+        gap: 6px;
+    }
+
+    .information-row> :first-child {
+        grid-column: 1 / -1;
+    }
+
+    .information-row> :nth-child(2) {
+        display: none;
+    }
+
+    .navigation-button {
+        transition: none;
+    }
+
+    .navigation-label::after {
+        transition: none;
+    }
+
+    .navigation-button:is(:hover, :active, :focus-visible) .navigation-label::after {
+        clip-path: inset(0);
+        animation: none;
+    }
+
+    .navigation-button:active {
+        opacity: 1;
+    }
+}
+
+/* Touch devices: no sticky hover; the pressed state is immediate. */
+@media (hover: none),
+(pointer: coarse) {
+    .navigation-button {
+        transition: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .navigation-button:hover {
+        opacity: 0.75;
+    }
+
+    .navigation-label::after,
+    .navigation-button:hover .navigation-label::after {
+        clip-path: inset(0 0 0 100%);
+        transition: none;
+        animation: none;
+    }
+
+    .navigation-button:is(:active, :focus-visible) {
+        opacity: 1;
+    }
+
+    .navigation-button:is(:active, :focus-visible) .navigation-label::after {
+        clip-path: inset(0);
+        animation: none;
+    }
+}
