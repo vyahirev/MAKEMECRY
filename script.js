@@ -370,3 +370,47 @@ async function startBackgroundAudio(event) {
 
 // document.addEventListener("click", startBackgroundAudio, { passive: true });
 // document.addEventListener("keydown", startBackgroundAudio);
+
+// Queue full underline sweeps so a short hover cannot cancel mid-animation.
+const underlineMotion = window.matchMedia(
+    "(min-width: 900px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)"
+);
+document.querySelectorAll(".navigation-button").forEach(button => {
+    let phase = "idle";
+    let wanted = false;
+    const phaseClasses = ["is-underline-entering", "is-underline-visible", "is-underline-leaving"];
+
+    function setPhase(next) {
+        phase = next;
+        button.classList.remove(...phaseClasses);
+        if (next !== "idle") button.classList.add(`is-underline-${next}`);
+    }
+
+    function updateIntent() {
+        if (!underlineMotion.matches) return;
+        wanted = button.matches(":hover, :focus-visible");
+        if (phase === "idle" && wanted) setPhase("entering");
+        else if (phase === "visible" && !wanted) setPhase("leaving");
+    }
+
+    function updateMode() {
+        setPhase("idle");
+        button.classList.toggle("underline-managed", underlineMotion.matches);
+        updateIntent();
+    }
+
+    button.addEventListener("pointerenter", updateIntent);
+    button.addEventListener("pointerleave", updateIntent);
+    button.addEventListener("focus", updateIntent);
+    button.addEventListener("blur", updateIntent);
+    button.addEventListener("animationend", event => {
+        if (!underlineMotion.matches || event.target !== button.querySelector(".navigation-label")) return;
+        if (event.animationName === "underline-enter" && phase === "entering") {
+            setPhase(wanted ? "visible" : "leaving");
+        } else if (event.animationName === "underline-leave" && phase === "leaving") {
+            setPhase(wanted ? "entering" : "idle");
+        }
+    });
+    underlineMotion.addEventListener("change", updateMode);
+    updateMode();
+});
