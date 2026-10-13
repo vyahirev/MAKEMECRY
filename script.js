@@ -414,3 +414,40 @@ document.querySelectorAll(".navigation-button").forEach(button => {
     underlineMotion.addEventListener("change", updateMode);
     updateMode();
 });
+
+// Muted looping background: keep the photo until a frame actually renders.
+const backgroundVideo = document.getElementById("background-video");
+const backgroundMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+backgroundVideo.muted = true;
+let videoFramePending = false;
+
+function revealBackgroundVideo() {
+    if (backgroundMotion.matches || videoFramePending) return;
+    videoFramePending = true;
+    const reveal = () => {
+        videoFramePending = false;
+        if (!backgroundMotion.matches && !backgroundVideo.error) backgroundVideo.classList.add("is-ready");
+    };
+    if ("requestVideoFrameCallback" in backgroundVideo) backgroundVideo.requestVideoFrameCallback(reveal);
+    else reveal();
+}
+
+function retryBackgroundVideo() {
+    if (!backgroundMotion.matches) backgroundVideo.play().catch(() => {});
+}
+
+function updateBackgroundMotion() {
+    backgroundVideo.autoplay = !backgroundMotion.matches;
+    if (backgroundMotion.matches) {
+        backgroundVideo.pause();
+        backgroundVideo.classList.remove("is-ready");
+    } else retryBackgroundVideo();
+}
+
+backgroundVideo.addEventListener("playing", revealBackgroundVideo);
+backgroundVideo.addEventListener("error", () => backgroundVideo.classList.remove("is-ready"));
+backgroundMotion.addEventListener("change", updateBackgroundMotion);
+// Some mobile power-saving modes block even muted autoplay; retry on a click.
+document.addEventListener("click", retryBackgroundVideo, { passive: true });
+updateBackgroundMotion();
+if (!backgroundVideo.paused && backgroundVideo.readyState >= 2) revealBackgroundVideo();
