@@ -11,7 +11,7 @@
     --black: #000;
     --white: #fff;
     --font-mono: "Fliege Mono", monospace;
-    --grain-opacity: 0.2;
+    --grain-opacity: 0.16;
     --grain-size: 200px;
     --grain-speed: 0.6s;
 }
@@ -671,6 +671,7 @@ html.about-active {
         transition: none;
     }
 }
+
 /* Finish each underline sweep before starting the next one. */
 @media (min-width: 900px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
     .navigation-button.underline-managed .navigation-label::after {
@@ -678,18 +679,26 @@ html.about-active {
         transition: none;
         animation: none;
     }
+
     .navigation-button.underline-managed.is-underline-entering .navigation-label::after {
         animation: underline-enter 280ms ease forwards;
     }
+
     .navigation-button.underline-managed.is-underline-visible .navigation-label::after {
         clip-path: inset(0);
     }
+
     .navigation-button.underline-managed.is-underline-leaving .navigation-label::after {
         animation: underline-leave 280ms ease forwards;
     }
 }
 
 @keyframes underline-leave {
-    from { clip-path: inset(0); }
-    to { clip-path: inset(0 0 0 100%); }
+    from {
+        clip-path: inset(0);
+    }
+
+    to {
+        clip-path: inset(0 0 0 100%);
+    }
 }
